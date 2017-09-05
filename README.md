@@ -2,7 +2,14 @@
 
 ## Plan:
 
-0. Prepare data. Use one hot encoding for categorical variables (objects and numeric that are categorical). Use -1 to fill NAs?
+0. Prepare data. 
+- Combine property info with train by merging on parcel id.
+- Generate features
+- One hot objects
+- One hot numeric variables that should be categorical
+- One hot categorical variables we made
+- Fill NA with -1
+
 1. Implement XGB, LinReg, and neural network models. Ensemble and submit.
 2. Feature engineer for XGB?
 3. Add other data sources? Will be allowed after first round, I think.
