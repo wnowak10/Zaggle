@@ -2,7 +2,7 @@
 
 ## Plan:
 
-0. Prepare data. Use label encoder for categorization. Use -1 to fill NAs?
+0. Prepare data. Use one hot encoding for categorical variables (objects and numeric that are categorical). Use -1 to fill NAs?
 1. Implement XGB, LinReg, and neural network models. Ensemble and submit.
 2. Feature engineer for XGB?
 3. Add other data sources? Will be allowed after first round, I think.
