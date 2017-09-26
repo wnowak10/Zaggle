@@ -29,37 +29,46 @@ y_train = train.logerror
 # # ########################
 # # ########################
 
-lgm_test_preds = pd.read_pickle('lgm_test_preds')
-lgm_train_preds = pd.read_pickle('lgm_train_preds')
-xgb1_pred_test = pd.read_pickle('xgb1_pred_test')
-xgb1_pred_train = pd.read_pickle('xgb1_pred_train')
-xgb2_pred_test = pd.read_pickle('xgb2_pred_test')
-xgb2_pred_train = pd.read_pickle('xgb2_pred_train')
-ols_test_preds = pd.read_pickle('ols_test_preds')
-ols_train_preds = pd.read_pickle('ols_train_preds')
-nn_pred_test = pd.read_pickle('nn_pred_test')
-nn_pred_train = pd.read_pickle('nn_pred_train')
+lgm_test_preds = pd.read_pickle('./predictions/lgm_test_preds')
+lgm_train_preds = pd.read_pickle('./predictions/lgm_train_preds')
 
-# my NN is too small. why?
+xgb1_pred_test = pd.read_pickle('./predictions/xgb1_pred_test')
+xgb1_pred_train = pd.read_pickle('./predictions/xgb1_pred_train')
+
+xgb2_pred_test = pd.read_pickle('./predictions/xgb2_pred_test')
+xgb2_pred_train = pd.read_pickle('./predictions/xgb2_pred_train')
+
+ols_test_preds = pd.read_pickle('./predictions/ols_test_preds')
+ols_train_preds = pd.read_pickle('./predictions/ols_train_preds')
+
+nn_pred_test = pd.read_pickle('./predictions/nn_pred_test')
+nn_pred_train = pd.read_pickle('./predictions/nn_pred_train')
 
 # so take all the preds on train
 # and fit a linear model to find coefficients to combine all these
 # predictions together
 # train this on y_train
 
-# once i get optimal weights on each individual prediction
-# use this model and apply to a matrix that is all of the test_preds files above
 
-# how to get all the train dfs agove into one big matrix?
-
-# pd.merge on index of all of them. should be same
-pd.concat([lgm_train_preds, xgb1_pred_train, xgb2_pred_train, ols_train_preds, nn_pred_train], axis = 1)
-
+all_preds = pd.concat([lgm_train_preds, xgb1_pred_train, xgb2_pred_train, ols_train_preds, nn_pred_train], axis = 1)
+cols = ["lgm_train_preds", 'xgb1_pred_train', 'xgb2_pred_train', 'ols_train_preds', 'nn_pred_train']
+all_preds.columns = cols
 
 from sklearn import linear_model
 reg = linear_model.LinearRegression()
+# fit linear model
+reg.fit(all_preds.values, y_train.values)
 
-reg.fit(x_train.values, y_train.values)
+
+
+# once i get optimal weights on each individual prediction
+# use this model and apply to a matrix that is all of the test_preds files above
+
+all_test_results_to_be_combined = pd.concat([lgm_test_preds, xgb1_pred_test, xgb2_pred_test, ols_test_preds, nn_pred_test], axis = 1)
+test_cols = ["lgm_test_preds", "xgb1_pred_test", "xgb2_pred_test", "ols_test_preds", "nn_pred_test"]
+all_test_results_to_be_combined.columns = test_cols
+
+final_preds  = reg.predict(all_test_results_to_be_combined.values)
 
 
 ##### COMBINE PREDICTIONS
@@ -84,15 +93,16 @@ reg.fit(x_train.values, y_train.values)
 test_dates = ['2016-10-01','2016-11-01','2016-12-01','2017-10-01','2017-11-01','2017-12-01']
 test_columns = ['201610','201611','201612','201710','201711','201712']
 #
+submission = pd.read_csv('../Data/sample_submission.csv')
 
 
 # print( "\nPredicting with OLS and combining with XGB/LGB/NN/baseline predicitons: ..." )
 for i in range(len(test_dates)):
 #     test['transactiondate'] = test_dates[i]
 #     pred = OLS_WEIGHT*reg.predict(get_features(test)) + (1-OLS_WEIGHT)*pred0
-    pred = (lightgbm_preds+ xgb1_pred + xgb2_pred) / 3
+    # pred = (lightgbm_preds+ xgb1_pred + xgb2_pred) / 3
     # submission[test_columns[i]] = [float(format(x, '.4f')) for x in pred]
-    submission[test_columns[i]] = pred
+    submission[test_columns[i]] = final_preds
     submission = submission.round(4)
 
 #     print('predict...', i)
@@ -128,3 +138,4 @@ submission.to_csv('sub{}.csv'.format(datetime.now().strftime('%Y%m%d_%H%M%S')), 
 # # version 9: reduce NN weight to 0.01
 # # version 10: increasee NN weight to 0.02
 # # version 11: added Nikunj features
+#  linear reg if 5 separate predictions
